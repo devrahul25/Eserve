@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Content Editor — Eserve Infotech (Admin)</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/logo.svg" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ===== LOGIN GATE ===== -->
+  <div id="loginGate" class="login-gate">
+    <form id="loginForm" class="login-card">
+      <div class="brand">
+        <object data="../assets/images/logo.svg" type="image/svg+xml" aria-hidden="true" style="pointer-events:none;height:38px"></object>
+      </div>
+      <h1>Content Editor</h1>
+      <p class="muted">Internal access only. Enter the team password to continue.</p>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" autofocus />
+      <span class="err" id="pwErr"></span>
+      <button class="btn primary" type="submit">Sign in</button>
+      <p class="hint muted">Default password: <code>eserve2026</code> — change it from the panel after signing in.</p>
+      <p class="hint muted" id="phpStatus" style="margin-top:4px"></p>
+    </form>
+  </div>
+
+  <!-- ===== APP ===== -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <div class="topbar-left">
+        <object data="../assets/images/logo.svg" type="image/svg+xml" aria-hidden="true" style="pointer-events:none;height:34px"></object>
+        <span class="badge-internal">Internal · Content Editor</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="status" id="status">Loading…</span>
+        <button class="btn ghost" id="btnReload" title="Reload server JSON">Reload</button>
+        <a class="btn ghost" id="btnPreview" href="../index.html" target="_blank">Open site preview</a>
+        <button class="btn ghost" id="btnDownload" title="Export a backup copy">Export backup</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
+        <button class="btn primary" id="btnSave">Save changes</button>
+        <button class="btn ghost danger" id="btnLogout" title="Sign out">Sign out</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="side-section">
+          <span class="side-title">Pages</span>
+          <nav class="side-nav" id="sideNav">
+            <button class="side-item active" data-page="site"><span class="ic">⚙</span>Site-wide</button>
+            <button class="side-item" data-page="home"><span class="ic">⌂</span>Home</button>
+            <button class="side-item" data-page="about"><span class="ic">i</span>About</button>
+            <button class="side-item" data-page="services"><span class="ic">▦</span>Services</button>
+            <button class="side-item" data-page="portfolio"><span class="ic">★</span>Portfolio</button>
+            <button class="side-item" data-page="contact"><span class="ic">@</span>Contact</button>
+          </nav>
+        </div>
+        <div class="side-section">
+          <span class="side-title">Tools</span>
+          <button class="side-item" id="btnChangePw"><span class="ic">⌬</span>Change password</button>
+          <button class="side-item" id="btnReset"><span class="ic">↺</span>Reset to last saved</button>
+        </div>
+        <div class="side-help">
+          <strong>How it works</strong>
+          <ol>
+            <li>Edit any field — changes save as a draft on this device instantly.</li>
+            <li>Click <em>Open site preview</em> to check on your screen.</li>
+            <li>Hit <em>Save changes</em> — it publishes straight to the live site.</li>
+            <li><em>Export backup</em> just downloads a copy of the current content for your own records.</li>
+          </ol>
+        </div>
+      </aside>
+
+      <main class="editor" id="editor">
+        <!-- Form is rendered dynamically by admin.js -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

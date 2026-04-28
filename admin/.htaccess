@@ -1,0 +1,11 @@
+# Block direct access to internal data + backups
+RedirectMatch 404 ^/admin/data/
+RedirectMatch 404 ^/admin/backups/
+
+# Block access to PHP config files
+<FilesMatch "^config\.php$">
+  Require all denied
+</FilesMatch>
+
+# Sensible defaults
+Options -Indexes
