@@ -1,0 +1,50 @@
+# =========================================================
+# Eserve Infotech — root .htaccess
+# Apache / LiteSpeed configuration.
+# =========================================================
+
+# ----- Tell browsers and CDNs NEVER to cache content.json -----
+# Without this, writers save in the admin panel but visitors keep seeing
+# the previous content because their browser/CDN holds a cached copy.
+<Files "content.json">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+        Header unset ETag
+        Header unset Last-Modified
+    </IfModule>
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresDefault "access plus 0 seconds"
+    </IfModule>
+    FileETag None
+</Files>
+
+# ----- Don't cache HTML either (so loader updates ship instantly) -----
+<FilesMatch "\.html$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, must-revalidate"
+    </IfModule>
+</FilesMatch>
+
+# ----- Long-cache static assets (versioned/immutable) -----
+<FilesMatch "\.(css|js|svg|woff2?|png|jpg|jpeg|webp|avif|ico)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=2592000"
+    </IfModule>
+</FilesMatch>
+
+# ----- Compression -----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# ----- Block direct access to backups + data + tooling -----
+RedirectMatch 404 ^/admin/data/
+RedirectMatch 404 ^/admin/backups/
+RedirectMatch 404 ^/\.git/
+
+# ----- Sensible defaults -----
+Options -Indexes
+ServerSignature Off

@@ -1,35 +1,47 @@
 /* =========================================================
    ESERVE INFOTECH — Content Loader
-   Reads content.json (or localStorage override from /admin)
-   and populates [data-edit="page.key"] elements.
-   Falls back silently if anything fails — original HTML stays visible.
+   Reads content.json and populates [data-edit="page.key"] elements.
+   Falls back silently — if the fetch fails, the inline HTML stays visible.
+
+   IMPORTANT — Cache busting:
+   Browsers, hosting providers and CDNs (Cloudflare, BunnyCDN, etc.) love
+   to cache .json files. Without busting, visitors keep seeing the old
+   content even after the writer hits "Save". We use three layers:
+     1. A timestamp query string on every fetch (per page-load).
+     2. cache: 'no-store' to bypass the HTTP disk cache.
+     3. Cache-Control: no-store header on content.json from .htaccess.
    ========================================================= */
 
 (function () {
   'use strict';
 
-  // Walk up to find content.json regardless of subdirectory depth
-  // index.html → "./content.json"
-  // services/x.html → "../content.json"
-  function findContentUrl() {
-    const path = window.location.pathname;
-    // count how many path segments are below the site root
-    // we use a heuristic: if path includes "/services/" or "/admin/", use ../
-    if (path.includes('/services/') || path.includes('/admin/')) return '../content.json';
-    return 'content.json';
+  // Resolve the site root (where content.json + content.php live)
+  // relative to where this loader script lives, so it works at any
+  // subdirectory depth without per-page heuristics.
+  function findSiteRoot() {
+    var script = document.currentScript;
+    if (!script) {
+      var scripts = document.getElementsByTagName('script');
+      for (var i = 0; i < scripts.length; i++) {
+        if (scripts[i].src && scripts[i].src.indexOf('content-loader') !== -1) {
+          script = scripts[i];
+          break;
+        }
+      }
+    }
+    if (script && script.src) {
+      // /assets/js/content-loader.js → walk up THREE segments to reach site root
+      return script.src.replace(/\/[^\/]*$/, '').replace(/\/[^\/]*$/, '').replace(/\/[^\/]*$/, '');
+    }
+    return window.location.origin;
   }
 
   function applyContent(data) {
+    if (!data) return;
     document.querySelectorAll('[data-edit]').forEach(function (el) {
-      const key = el.getAttribute('data-edit');
-      const parts = key.split('.');
-      let val = data;
-      for (let i = 0; i < parts.length; i++) {
-        if (val == null) return;
-        val = val[parts[i]];
-      }
+      var key = el.getAttribute('data-edit');
+      var val = key.split('.').reduce(function (a, k) { return a == null ? a : a[k]; }, data);
       if (val == null) return;
-      // For inputs/selects, set value; for everything else, set text/HTML
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
         el.value = val;
       } else if (el.hasAttribute('data-edit-html')) {
@@ -38,34 +50,47 @@
         el.textContent = val;
       }
     });
-
-    // Update href/src attributes that mirror content (mailto, tel)
     document.querySelectorAll('[data-edit-href]').forEach(function (el) {
-      const key = el.getAttribute('data-edit-href');
-      const prefix = el.getAttribute('data-edit-prefix') || '';
-      const parts = key.split('.');
-      let val = data;
-      for (let i = 0; i < parts.length; i++) {
-        if (val == null) return;
-        val = val[parts[i]];
-      }
+      var key = el.getAttribute('data-edit-href');
+      var prefix = el.getAttribute('data-edit-prefix') || '';
+      var val = key.split('.').reduce(function (a, k) { return a == null ? a : a[k]; }, data);
       if (val != null) el.setAttribute('href', prefix + val);
     });
   }
 
-  // Try localStorage preview first (set by admin panel), then fetch JSON
+  var fetchOpts = {
+    cache: 'no-store',
+    credentials: 'same-origin',
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+  };
+
+  function fetchJson(url) {
+    return fetch(url, fetchOpts).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
   function load() {
+    var root = findSiteRoot();
+    var bust = '?v=' + Date.now();
+
+    // Apply local draft first (only relevant on the editor's preview tab),
+    // then overwrite with the live server JSON when it arrives.
     try {
-      const local = localStorage.getItem('eserveContentDraft');
-      if (local) {
-        applyContent(JSON.parse(local));
-      }
+      var draft = localStorage.getItem('eserveContentDraft');
+      if (draft) applyContent(JSON.parse(draft));
     } catch (e) { /* ignore */ }
 
-    fetch(findContentUrl(), { cache: 'no-cache' })
-      .then(function (r) { return r.ok ? r.json() : null; })
+    // Prefer content.php (always serves with no-cache headers, even when
+    // the host's mod_headers / .htaccess directives are disabled).
+    // Fall back to content.json if PHP is unavailable.
+    fetchJson(root + '/content.php' + bust)
+      .catch(function () { return fetchJson(root + '/content.json' + bust); })
       .then(function (data) { if (data) applyContent(data); })
-      .catch(function () { /* fail silent — fallback to inline content */ });
+      .catch(function (e) {
+        if (window.console && console.warn) console.warn('content-loader: fetch failed', e);
+      });
   }
 
   if (document.readyState === 'loading') {

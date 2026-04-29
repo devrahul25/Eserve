@@ -59,6 +59,23 @@ location = /admin/_common.php      { return 403; }
 
 Up to 30 timestamped backups are kept automatically. To roll back, copy a backup from `admin/backups/` over `content.json`.
 
+## "I saved in the editor but the live site still shows old content"
+
+This is almost always **caching** — not a save failure. The editor writes `content.json` to the server correctly, but the visitor's browser (or a CDN like Cloudflare) keeps serving the previous copy. The site already has three layers of defence:
+
+1. The public loader fetches with `?v=<timestamp>` cache-bust + `cache: 'no-store'`.
+2. `/content.php` proxies `content.json` and ALWAYS sends `Cache-Control: no-store`. The loader prefers this URL.
+3. The root `.htaccess` sets `Cache-Control: no-store` on `content.json` directly.
+
+If you're still seeing stale content after Save, check in this order:
+
+- **Hard-refresh once** (Ctrl+Shift+R / Cmd+Shift+R) to verify your local browser cache, not the server, is the issue.
+- **Open the live site in a private/incognito window** — clean cache, clean test.
+- **Open DevTools → Network → reload → click `content.php`** (or `content.json` if PHP is disabled). Confirm the response body has the new text. If not, the file was not saved on the server — check `admin/backups/` for the latest backup; if there's a fresh one, the host blocked the rename. Run `chmod 664 content.json` and retry.
+- **If you use Cloudflare**, in the Cloudflare dashboard add a Page Rule for `*yourdomain.co.uk/content.json` and `*yourdomain.co.uk/content.php` → **Cache Level: Bypass**. Or purge the cache from the dashboard after each save. The Page Rule is the durable fix.
+- **If your hosting has its own CDN** (cPanel LiteSpeed Cache, NitroPack, WP Rocket-style plugin), exclude `content.json` and `content.php` from caching in that plugin's settings.
+- **If the host disables `mod_headers`**, the `.htaccess` rules silently no-op — but `content.php` still works because it sends headers from PHP.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |

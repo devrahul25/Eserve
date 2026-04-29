@@ -47,4 +47,14 @@ if (!@rename($tmp, $CONTENT_PATH)) {
     send_json(['error' => 'Could not replace content.json (rename failed). Check folder permissions.'], 500);
 }
 
-send_json(['ok' => true, 'bytes' => $bytes, 'savedAt' => date('c')]);
+// Force PHP to drop any cached metadata about the file (mtime, size).
+clearstatcache(true, $CONTENT_PATH);
+// Bump mtime explicitly so any reverse-proxy that uses Last-Modified sees the change.
+@touch($CONTENT_PATH);
+
+send_json([
+    'ok'      => true,
+    'bytes'   => $bytes,
+    'savedAt' => date('c'),
+    'mtime'   => filemtime($CONTENT_PATH),
+]);
