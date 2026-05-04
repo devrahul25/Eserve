@@ -252,6 +252,11 @@
         {
           title: "What's included", tag: 'Features',
           desc: 'The six feature items shown in the grid.',
+          fields: [
+            { key: pageKey + '.feat_eyebrow', label: 'Section eyebrow', type: 'text' },
+            { key: pageKey + '.feat_h2_part1', label: 'Section heading — regular', type: 'text' },
+            { key: pageKey + '.feat_h2_part2', label: 'Section heading — highlighted', type: 'text' },
+          ],
           subgroups: [1,2,3,4,5,6].map(function(n){ return {
             title: 'Feature ' + n,
             fields: [
@@ -262,9 +267,14 @@
         },
         {
           title: 'How we deliver', tag: 'Process',
-          desc: 'The four-step process sequence.',
+          desc: 'The four-stage delivery process.',
+          fields: [
+            { key: pageKey + '.process_eyebrow', label: 'Section eyebrow', type: 'text' },
+            { key: pageKey + '.process_h2_part1', label: 'Section heading — regular', type: 'text' },
+            { key: pageKey + '.process_h2_part2', label: 'Section heading — highlighted', type: 'text' },
+          ],
           subgroups: [1,2,3,4].map(function(n){ return {
-            title: 'Step ' + n,
+            title: 'Stage ' + n,
             fields: [
               { key: pageKey + '.step_' + n + '_title', label: 'Title', type: 'text' },
               { key: pageKey + '.step_' + n + '_desc', label: 'Description', type: 'textarea' },
@@ -272,10 +282,25 @@
           };})
         },
         {
+          title: 'Tech stack', tag: 'Tech',
+          desc: 'The tools and technologies listed.',
+          fields: [
+            { key: pageKey + '.tech_eyebrow', label: 'Section eyebrow', type: 'text' },
+            { key: pageKey + '.tech_h2_part1', label: 'Section heading — regular', type: 'text' },
+            { key: pageKey + '.tech_h2_part2', label: 'Section heading — highlighted', type: 'text' },
+            { key: pageKey + '.tech_p', label: 'Section description', type: 'textarea' },
+          ]
+        },
+        {
           title: 'FAQ', tag: 'Questions',
-          desc: 'The three expandable FAQ items.',
-          subgroups: [1,2,3].map(function(n){ return {
-            title: 'FAQ ' + n,
+          desc: 'Frequently asked questions.',
+          fields: [
+            { key: pageKey + '.faq_eyebrow', label: 'Section eyebrow', type: 'text' },
+            { key: pageKey + '.faq_h2_part1', label: 'Section heading — regular', type: 'text' },
+            { key: pageKey + '.faq_h2_part2', label: 'Section heading — highlighted', type: 'text' },
+          ],
+          subgroups: [1,2,3,4,5].map(function(n){ return {
+            title: 'Question ' + n,
             fields: [
               { key: pageKey + '.faq_' + n + '_q', label: 'Question', type: 'text' },
               { key: pageKey + '.faq_' + n + '_a', label: 'Answer', type: 'textarea' },
@@ -286,8 +311,9 @@
           title: 'Final CTA', tag: 'Bottom',
           desc: 'The text above the contact buttons.',
           fields: [
+            { key: pageKey + '.cta_eyebrow', label: 'Banner eyebrow', type: 'text' },
             { key: pageKey + '.cta_h2', label: 'Main heading', type: 'text' },
-            { key: pageKey + '.cta_lead', label: 'Lead line', type: 'text' },
+            { key: pageKey + '.cta_lead', label: 'Highlighted heading', type: 'text' },
             { key: pageKey + '.cta_p', label: 'Small description', type: 'textarea' },
           ]
         }
