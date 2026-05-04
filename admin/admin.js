@@ -26,13 +26,13 @@
           ]
         },
         {
-          title: 'Contact details', tag: 'Footer · Contact page',
-          desc: 'Used in the footer on every page and on the Contact page info cards.',
+          title: 'Global contact details', tag: 'Footer · Contact page info',
+          desc: 'Used in the footer of every page and on the Contact page info cards.',
           fields: [
-            { key: 'site.email', label: 'Email address', type: 'text' },
-            { key: 'site.phone', label: 'Phone number', type: 'text' },
-            { key: 'site.address_line_1', label: 'Address line 1', type: 'text' },
-            { key: 'site.address_line_2', label: 'Address line 2', type: 'text' },
+            { key: 'site.email', label: 'Global email address', type: 'text' },
+            { key: 'site.phone', label: 'Global phone number', type: 'text' },
+            { key: 'site.address_line_1', label: 'Address line 1 (Global)', type: 'text' },
+            { key: 'site.address_line_2', label: 'Address line 2 (Global)', type: 'text' },
           ]
         },
       ]
@@ -235,6 +235,72 @@
       ]
     },
   };
+
+  /* Helper to build service page schema quickly */
+  function makeServiceSchema(pageKey, title, sub) {
+    return {
+      title: title, sub: sub,
+      sections: [
+        {
+          title: 'Hero', tag: 'Top',
+          fields: [
+            { key: pageKey + '.hero_h1_part1', label: 'Headline — regular text', type: 'text' },
+            { key: pageKey + '.hero_h1_part2', label: 'Headline — highlighted text', type: 'text' },
+            { key: pageKey + '.hero_lead', label: 'Subheadline / Lead', type: 'textarea' },
+          ]
+        },
+        {
+          title: "What's included", tag: 'Features',
+          desc: 'The six feature items shown in the grid.',
+          subgroups: [1,2,3,4,5,6].map(function(n){ return {
+            title: 'Feature ' + n,
+            fields: [
+              { key: pageKey + '.feat_' + n + '_title', label: 'Title', type: 'text' },
+              { key: pageKey + '.feat_' + n + '_desc', label: 'Description', type: 'textarea' },
+            ]
+          };})
+        },
+        {
+          title: 'How we deliver', tag: 'Process',
+          desc: 'The four-step process sequence.',
+          subgroups: [1,2,3,4].map(function(n){ return {
+            title: 'Step ' + n,
+            fields: [
+              { key: pageKey + '.step_' + n + '_title', label: 'Title', type: 'text' },
+              { key: pageKey + '.step_' + n + '_desc', label: 'Description', type: 'textarea' },
+            ]
+          };})
+        },
+        {
+          title: 'FAQ', tag: 'Questions',
+          desc: 'The three expandable FAQ items.',
+          subgroups: [1,2,3].map(function(n){ return {
+            title: 'FAQ ' + n,
+            fields: [
+              { key: pageKey + '.faq_' + n + '_q', label: 'Question', type: 'text' },
+              { key: pageKey + '.faq_' + n + '_a', label: 'Answer', type: 'textarea' },
+            ]
+          };})
+        },
+        {
+          title: 'Final CTA', tag: 'Bottom',
+          desc: 'The text above the contact buttons.',
+          fields: [
+            { key: pageKey + '.cta_h2', label: 'Main heading', type: 'text' },
+            { key: pageKey + '.cta_lead', label: 'Lead line', type: 'text' },
+            { key: pageKey + '.cta_p', label: 'Small description', type: 'textarea' },
+          ]
+        }
+      ]
+    };
+  }
+
+  SCHEMA.svc_web_dev = makeServiceSchema('svc_web_dev', 'Web Development', 'Full control over the web development service sub-page.');
+  SCHEMA.svc_mobile  = makeServiceSchema('svc_mobile',  'Mobile App Development', 'Full control over the mobile apps service sub-page.');
+  SCHEMA.svc_ai      = makeServiceSchema('svc_ai',      'AI Solutions', 'Full control over the generative AI service sub-page.');
+  SCHEMA.svc_seo     = makeServiceSchema('svc_seo',     'SEO & Growth', 'Full control over the SEO service sub-page.');
+  SCHEMA.svc_erp     = makeServiceSchema('svc_erp',     'ERP & CRM', 'Full control over the enterprise software service sub-page.');
+
 
   /* ---------- STATE ---------- */
   const STORAGE_DRAFT = 'eserveContentDraft';
@@ -490,9 +556,13 @@
     const files = [
       '../index.html',
       '../about.html',
-      '../services.html',
       '../portfolio.html',
-      '../contact.html'
+      '../contact.html',
+      'web-development.html',
+      'mobile-app.html',
+      'ai-solutions.html',
+      'seo.html',
+      'erp-crm.html'
     ];
     const foundKeys = new Set();
     
