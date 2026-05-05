@@ -1,0 +1,10 @@
+# Content data (Managed via Admin Panel)
+# We ignore these so local pushes don't overwrite live admin changes
+content.json
+content.php
+admin/backups/
+
+# Logs and temp files
+*.log
+.DS_Store
+node_modules/
