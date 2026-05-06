@@ -585,7 +585,11 @@ p  { margin: 0 0 var(--s-4); color: var(--text-muted); }
 }
 .page-head .crumbs a:hover { color: var(--accent); }
 .page-head h1 { max-width: 900px; margin-left: auto; margin-right: auto; }
-.page-head p { max-width: 865px !important; margin: var(--s-4) auto 0; color: var(--text-muted); }
+.page-head p { 
+  max-width: 865px !important;
+  margin: var(--s-4) auto 0;
+  color: var(--text-muted); 
+}
 
 /* ---------- PROCESS / STEPS ---------- */
 .steps {
