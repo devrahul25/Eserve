@@ -127,26 +127,52 @@
     },
     about: {
       title: 'About page',
-      sub: 'about.html — story, principles and team values.',
+      sub: 'about.html — story, mission and principles.',
       sections: [
         {
           title: 'Hero', tag: 'Top of page',
           desc: 'Headline and subheadline at the top of the About page.',
           fields: [
-            { key: 'about.hero_h1_part1', label: 'Headline — start', type: 'text' },
-            { key: 'about.hero_h1_part2', label: 'Headline — highlighted', type: 'text' },
-            { key: 'about.hero_lead', label: 'Subheadline', type: 'textarea' },
+            { key: 'about.hero_eyebrow', label: 'Eyebrow', type: 'text' },
+            { key: 'about.hero_h1_main', label: 'Headline — main text', type: 'text' },
+            { key: 'about.hero_h1_accent', label: 'Headline — accent text', type: 'text' },
+            { key: 'about.hero_lead', label: 'Subheadline / Lead paragraph', type: 'textarea' },
+            { key: 'about.hero_cta_primary', label: 'Primary button text', type: 'text' },
+            { key: 'about.hero_cta_secondary', label: 'Secondary button text', type: 'text' },
+          ]
+        },
+        {
+          title: 'Mission card', tag: 'Hero floating card',
+          desc: 'The small card floating over the hero image.',
+          fields: [
+            { key: 'about.hero_mission_label', label: 'Card label', type: 'text' },
+            { key: 'about.hero_mission_h3', label: 'Card title', type: 'text' },
+            { key: 'about.hero_mission_p', label: 'Card text', type: 'textarea' },
           ]
         },
         {
           title: 'Our story', tag: 'Section 2',
-          desc: 'The "Our story" panel — heading and two paragraphs.',
+          desc: 'The "Our story" sticky section on the left.',
           fields: [
-            { key: 'about.story_eyebrow', label: 'Eyebrow', type: 'text' },
-            { key: 'about.story_heading', label: 'Heading', type: 'textarea' },
-            { key: 'about.story_p1', label: 'Paragraph 1', type: 'textarea' },
-            { key: 'about.story_p2', label: 'Paragraph 2', type: 'textarea' },
+            { key: 'about.story_label', label: 'Label', type: 'text' },
+            { key: 'about.story_h2_main', label: 'Heading — main', type: 'text' },
+            { key: 'about.story_h2_accent', label: 'Heading — accent', type: 'text' },
+            { key: 'about.story_p_lead', label: 'Lead paragraph', type: 'textarea' },
           ]
+        },
+        {
+          title: 'Story milestones', tag: 'Section 2 cards',
+          desc: 'The three cards on the right side of the story section.',
+          subgroups: [1, 2, 3].map(function (n) {
+            return {
+              title: 'Card ' + n,
+              fields: [
+                { key: 'about.story_card' + n + '_num', label: 'Number / ID', type: 'text' },
+                { key: 'about.story_card' + n + '_h3', label: 'Title', type: 'text' },
+                { key: 'about.story_card' + n + '_p', label: 'Description', type: 'textarea' },
+              ]
+            };
+          })
         },
         {
           title: 'Six principles', tag: 'Section 3',
