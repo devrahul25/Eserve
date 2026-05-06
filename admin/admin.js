@@ -445,6 +445,7 @@
       html += '<div class="field"><label for="f-' + escapeAttr(f.key) + '">' + escape(f.label) + '</label>';
       if (f.type === 'textarea') {
         html += '<textarea id="f-' + escapeAttr(f.key) + '" data-key="' + escapeAttr(f.key) + '">' + safe + '</textarea>';
+        html += '<span class="help" style="margin-bottom:8px;display:block">💡 HTML tags like &lt;br&gt; or &lt;b&gt; are supported in this field.</span>';
       } else {
         html += '<input id="f-' + escapeAttr(f.key) + '" data-key="' + escapeAttr(f.key) + '" type="text" value="' + safe + '" />';
       }
@@ -597,14 +598,20 @@
         const res = await fetch(files[i] + '?t=' + Date.now());
         if (!res.ok) continue;
         const text = await res.text();
-        const matches = text.matchAll(/data-edit(?:-href)?="([^"]+)"/g);
+        
+        // Find keys and check if they have data-edit-html nearby
+        const matches = text.matchAll(/<[^>]+data-edit="([^"]+)"([^>]*)/g);
         for (const m of matches) {
-          foundKeys.add(m[1]);
+          const key = m[1];
+          const attrs = m[2];
+          const isHtml = attrs.includes('data-edit-html');
+          foundKeys.add({ key, isHtml });
         }
       } catch(e) {}
     }
     
     const knownKeys = new Set();
+    // ... rest of the logic ...
     Object.keys(SCHEMA).forEach(function(pageKey) {
       if (SCHEMA[pageKey].sections) {
         SCHEMA[pageKey].sections.forEach(function(sec) {
@@ -618,7 +625,10 @@
       }
     });
 
-    foundKeys.forEach(function(key) {
+    foundKeys.forEach(function(item) {
+      const key = typeof item === 'string' ? item : item.key;
+      const isHtml = typeof item === 'string' ? false : item.isHtml;
+      
       if (!knownKeys.has(key)) {
         const parts = key.split('.');
         const pageKey = parts[0];
@@ -656,10 +666,12 @@
         }
         
         const formattedLabel = parts.slice(1).join(' ').replace(/_/g, ' ');
+        const isLongText = (key.includes('desc') || key.includes('text') || key.includes('p') || key.includes('lead'));
         targetSection.fields.push({
           key: key,
           label: formattedLabel.charAt(0).toUpperCase() + formattedLabel.slice(1),
-          type: (key.includes('desc') || key.includes('text') || key.includes('p') || key.includes('lead')) ? 'textarea' : 'text'
+          type: isLongText ? 'textarea' : 'text',
+          html: isHtml || isLongText // if it was marked in HTML or is a long field, treat as HTML candidate
         });
       }
     });
