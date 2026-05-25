@@ -411,9 +411,22 @@
   }
 
   /* ---------- RENDER ---------- */
-  function renderPage(pageKey) {
-    const schema = SCHEMA[pageKey];
+  async function renderPage(pageKey) {
     const root = document.getElementById('editor');
+    
+    if (pageKey === 'submissions') {
+      root.innerHTML = '<h2>Loading Submissions…</h2>';
+      await renderSubmissionsPage();
+      return;
+    }
+    
+    if (pageKey === 'settings') {
+      root.innerHTML = '<h2>Loading Settings…</h2>';
+      await renderSettingsPage();
+      return;
+    }
+
+    const schema = SCHEMA[pageKey];
     if (!schema) { root.innerHTML = ''; return; }
 
     let html = '<h2>' + escape(schema.title) + '</h2><p class="page-sub">' + escape(schema.sub || '') + '</p>';
@@ -435,6 +448,269 @@
 
     root.innerHTML = html;
     bindFieldEvents();
+  }
+
+  // =========================================================
+  // Render Submissions Page
+  // =========================================================
+  async function renderSubmissionsPage() {
+    const root = document.getElementById('editor');
+    try {
+      const res = await api('api.php?action=submissions');
+      const subs = res.submissions || [];
+      
+      let html = '<div class="page-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px">';
+      html += '<div><h2>Client Inquiries</h2><p class="page-sub">Submissions saved directly from the contact form.</p></div>';
+      if (subs.length > 0) {
+        html += '<a class="btn primary" href="api.php?action=export_csv" target="_blank" style="text-decoration:none"><span class="ic">📥</span>Export CSV</a>';
+      }
+      html += '</div>';
+
+      if (subs.length === 0) {
+        html += '<div class="empty-state" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); border-radius:8px; color:var(--text-dim)">';
+        html += '<span class="empty-icon" style="font-size:48px; display:block; margin-bottom:12px">✉</span>';
+        html += '<p style="margin:0; font-size:16px">No contact submissions found yet.</p></div>';
+        root.innerHTML = html;
+        return;
+      }
+
+      html += '<div class="table-container" style="overflow-x:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:8px">';
+      html += '<table class="data-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:14px">';
+      html += '<thead style="background:var(--border)"><tr><th style="padding:12px; border-bottom:1px solid var(--border)">Date</th><th style="padding:12px; border-bottom:1px solid var(--border)">Name</th><th style="padding:12px; border-bottom:1px solid var(--border)">Email</th><th style="padding:12px; border-bottom:1px solid var(--border)">Project Info</th><th style="padding:12px; border-bottom:1px solid var(--border)">Message</th><th style="padding:12px; border-bottom:1px solid var(--border); text-align:right">Actions</th></tr></thead>';
+      html += '<tbody>';
+      
+      subs.forEach(function (sub) {
+        const dateStr = new Date(sub.created_at.replace(' ', 'T')).toLocaleString();
+        const escName = escape(sub.name);
+        const escEmail = escape(sub.email);
+        const details = [];
+        if (sub.company) details.push('<strong>Co:</strong> ' + escape(sub.company));
+        if (sub.service) details.push('<strong>Svc:</strong> ' + escape(sub.service));
+        if (sub.budget) details.push('<strong>Budget:</strong> ' + escape(sub.budget));
+        const escDetails = details.join('<br>') || '<span class="muted" style="color:var(--text-dim)">—</span>';
+        
+        const rawMsg = sub.message || '';
+        const shortMsg = rawMsg.length > 55 ? escape(rawMsg.slice(0, 55)) + '...' : escape(rawMsg);
+        
+        html += '<tr data-id="' + sub.id + '" style="border-bottom:1px solid var(--border)">';
+        html += '<td style="padding:12px; white-space:nowrap; vertical-align:top">' + escape(dateStr) + '</td>';
+        html += '<td style="padding:12px; font-weight:600; vertical-align:top">' + escName + '</td>';
+        html += '<td style="padding:12px; vertical-align:top"><a href="mailto:' + escEmail + '" style="color:var(--primary); text-decoration:none">' + escEmail + '</a></td>';
+        html += '<td style="padding:12px; font-size:13px; line-height:1.4; vertical-align:top">' + escDetails + '</td>';
+        html += '<td class="cell-msg" title="Click to view full message" style="padding:12px; cursor:pointer; vertical-align:top; max-width:250px; word-break:break-all">' + shortMsg + '</td>';
+        html += '<td style="padding:12px; text-align:right; white-space:nowrap; vertical-align:top">';
+        html += '<button class="btn btn-sm ghost" data-act="view" style="margin-right:6px; padding:4px 8px; font-size:12px">View</button>';
+        html += '<button class="btn btn-sm ghost danger" data-act="delete" style="padding:4px 8px; font-size:12px">Delete</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      
+      html += '</tbody></table></div>';
+      root.innerHTML = html;
+
+      // Bind actions
+      root.querySelectorAll('tr[data-id]').forEach(function (row) {
+        const id = parseInt(row.getAttribute('data-id'));
+        const sub = subs.find(function(s) { return s.id === id; });
+
+        const viewHandler = function() { showSubmissionModal(sub); };
+        row.querySelector('.cell-msg').onclick = viewHandler;
+        row.querySelector('[data-act="view"]').onclick = viewHandler;
+
+        row.querySelector('[data-act="delete"]').onclick = async function (e) {
+          e.stopPropagation();
+          if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) return;
+          try {
+            await api('api.php?action=delete_submission', {
+              method: 'POST',
+              body: JSON.stringify({ id: id })
+            });
+            toast('Submission deleted', 'success');
+            renderSubmissionsPage();
+          } catch(err) {
+            toast(err.message || 'Failed to delete submission', 'error');
+          }
+        };
+      });
+
+    } catch (err) {
+      console.error(err);
+      root.innerHTML = '<h2>Client Inquiries</h2><p class="error-msg" style="color:var(--danger)">Failed to load submissions: ' + escape(err.message) + '</p>';
+    }
+  }
+
+  // =========================================================
+  // Show submission modal
+  // =========================================================
+  function showSubmissionModal(sub) {
+    const dateStr = new Date(sub.created_at.replace(' ', 'T')).toLocaleString();
+    const back = document.createElement('div');
+    back.className = 'modal-backdrop';
+    back.innerHTML = '<div class="modal submission-modal" style="max-width: 600px">' +
+      '<div class="modal-header"><h3>Inquiry Details</h3><button class="close-btn" data-act="close" style="background:none; border:none; font-size:24px; cursor:pointer">&times;</button></div>' +
+      '<div class="modal-body">' +
+        '<div class="meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; font-size:14px">' +
+          '<div><strong>From:</strong> ' + escape(sub.name) + '</div>' +
+          '<div><strong>Email:</strong> <a href="mailto:' + escape(sub.email) + '" style="color:var(--primary); text-decoration:none">' + escape(sub.email) + '</a></div>' +
+          '<div><strong>Date:</strong> ' + escape(dateStr) + '</div>' +
+          '<div><strong>Company:</strong> ' + escape(sub.company || '—') + '</div>' +
+          '<div><strong>Service:</strong> ' + escape(sub.service || '—') + '</div>' +
+          '<div><strong>Budget:</strong> ' + escape(sub.budget || '—') + '</div>' +
+        '</div>' +
+        '<hr style="border:none; border-top:1px solid var(--border); margin:16px 0">' +
+        '<strong>Message:</strong>' +
+        '<div class="msg-box" style="margin-top:8px; background:var(--border); padding:16px; border-radius:6px; white-space:pre-wrap; max-height:250px; overflow-y:auto; line-height:1.5">' + escape(sub.message) + '</div>' +
+      '</div>' +
+      '<div class="modal-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px">' +
+        '<a class="btn primary" href="mailto:' + escape(sub.email) + '?subject=Re: Eserve Inquiry" style="text-decoration:none"><span class="ic">✉</span>Reply via Email</a>' +
+        '<button class="btn ghost" data-act="close">Close</button>' +
+      '</div>' +
+      '</div>';
+    document.body.appendChild(back);
+    
+    const close = function() { back.remove(); };
+    back.addEventListener('click', function (e) { if (e.target === back) close(); });
+    back.querySelectorAll('[data-act="close"]').forEach(function(btn) { btn.onclick = close; });
+  }
+
+  // =========================================================
+  // Render Settings Page
+  // =========================================================
+  async function renderSettingsPage() {
+    const root = document.getElementById('editor');
+    try {
+      const res = await api('api.php?action=settings');
+      const settings = res.settings || {};
+      
+      let html = '<h2>SMTP &amp; Notifications</h2>';
+      html += '<p class="page-sub">Configure how form submission alerts are sent using an SMTP email server.</p>';
+      
+      html += '<form id="settingsForm" class="settings-form" style="margin-top:20px">';
+      html += '<div class="settings-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px">';
+      
+      html += '<div class="field"><label for="smtp_host">SMTP Host</label>';
+      html += '<input id="smtp_host" type="text" placeholder="e.g. smtp.gmail.com" value="' + escape(settings.smtp_host || '') + '" required /></div>';
+      
+      html += '<div class="field"><label for="smtp_port">SMTP Port</label>';
+      html += '<input id="smtp_port" type="number" placeholder="e.g. 587 or 465" value="' + escape(settings.smtp_port || '') + '" required /></div>';
+      
+      html += '<div class="field"><label for="smtp_secure">Connection Security</label>';
+      html += '<select id="smtp_secure" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text); font-size:14px">';
+      html += '<option value="tls" ' + (settings.smtp_secure === 'tls' ? 'selected' : '') + '>STARTTLS (Usually port 587)</option>';
+      html += '<option value="ssl" ' + (settings.smtp_secure === 'ssl' ? 'selected' : '') + '>SSL/TLS (Usually port 465)</option>';
+      html += '<option value="none" ' + (settings.smtp_secure === 'none' ? 'selected' : '') + '>None (Unencrypted)</option>';
+      html += '</select></div>';
+      
+      html += '<div class="field"><label for="smtp_user">SMTP Username</label>';
+      html += '<input id="smtp_user" type="text" placeholder="e.g. yourname@domain.com" value="' + escape(settings.smtp_user || '') + '" /></div>';
+      
+      html += '<div class="field"><label for="smtp_pass">SMTP Password</label>';
+      html += '<input id="smtp_pass" type="password" placeholder="••••••••" value="' + escape(settings.smtp_pass || '') + '" />';
+      html += '<span class="help" style="font-size:12px; color:var(--text-dim); display:block; margin-top:4px">Use an App Password if you use 2-Factor Authentication (e.g. Google App Password).</span></div>';
+
+      html += '<div class="field"><label for="smtp_from_name">Sender Name</label>';
+      html += '<input id="smtp_from_name" type="text" placeholder="e.g. Eserve Contact Form" value="' + escape(settings.smtp_from_name || 'Eserve Contact Form') + '" /></div>';
+      
+      html += '<div class="field"><label for="smtp_from_email">Sender (From) Email</label>';
+      html += '<input id="smtp_from_email" type="email" placeholder="e.g. alerts@yourdomain.com" value="' + escape(settings.smtp_from_email || '') + '" required /></div>';
+      
+      html += '<div class="field"><label for="smtp_to_email">Recipient (To) Email</label>';
+      html += '<input id="smtp_to_email" type="email" placeholder="e.g. hello@eserveinfotech.co.uk" value="' + escape(settings.smtp_to_email || '') + '" required />';
+      html += '<span class="help" style="font-size:12px; color:var(--text-dim); display:block; margin-top:4px">The email address that receives the contact form inquiries.</span></div>';
+      
+      html += '</div>'; // settings-grid
+
+      html += '<div class="settings-actions" style="margin-top:24px; display:flex; gap:12px">';
+      html += '<button type="submit" class="btn primary" id="btnSaveSettings">Save Settings</button>';
+      html += '<button type="button" class="btn ghost" id="btnTestEmail">Send Test Email</button>';
+      html += '</div>';
+
+      html += '</form>';
+      
+      html += '<div id="testLogContainer" class="test-log-container" style="display:none; margin-top:24px; border:1px solid var(--border); border-radius:6px; padding:16px; background:var(--bg-card)">';
+      html += '<h4 style="margin:0 0 12px 0">SMTP Transaction Log</h4>';
+      html += '<pre id="testLog" class="test-log" style="font-family:monospace; font-size:13px; margin:0; padding:12px; border-radius:4px; overflow-x:auto; line-height:1.4; white-space:pre-wrap; max-height:300px; overflow-y:auto"></pre>';
+      html += '</div>';
+
+      root.innerHTML = html;
+
+      const getFormFields = function() {
+        return {
+          smtp_host: document.getElementById('smtp_host').value,
+          smtp_port: document.getElementById('smtp_port').value,
+          smtp_secure: document.getElementById('smtp_secure').value,
+          smtp_user: document.getElementById('smtp_user').value,
+          smtp_pass: document.getElementById('smtp_pass').value,
+          smtp_from_name: document.getElementById('smtp_from_name').value,
+          smtp_from_email: document.getElementById('smtp_from_email').value,
+          smtp_to_email: document.getElementById('smtp_to_email').value,
+        };
+      };
+
+      document.getElementById('settingsForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const saveBtn = document.getElementById('btnSaveSettings');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        try {
+          await api('api.php?action=settings', {
+            method: 'POST',
+            body: JSON.stringify(getFormFields())
+          });
+          toast('Settings saved', 'success');
+        } catch(err) {
+          toast(err.message || 'Failed to save settings', 'error');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Settings';
+        }
+      };
+
+      document.getElementById('btnTestEmail').onclick = async function() {
+        const testBtn = document.getElementById('btnTestEmail');
+        const logCont = document.getElementById('testLogContainer');
+        const logPre = document.getElementById('testLog');
+        
+        testBtn.disabled = true;
+        testBtn.textContent = 'Testing…';
+        logCont.style.display = 'none';
+        logPre.textContent = '';
+        logPre.style.background = 'var(--border)';
+        logPre.style.color = 'var(--text)';
+        
+        try {
+          const res = await api('api.php?action=test_email', {
+            method: 'POST',
+            body: JSON.stringify(getFormFields())
+          });
+          toast('Test email sent successfully!', 'success');
+          logCont.style.display = 'block';
+          logPre.textContent = (res.log || []).join('\n');
+          logPre.style.background = 'rgba(16, 185, 129, 0.08)';
+          logPre.style.color = '#10b981';
+          logPre.style.borderLeft = '4px solid #10b981';
+        } catch (err) {
+          toast(err.message || 'Test email failed', 'error');
+          logCont.style.display = 'block';
+          
+          let logStr = 'Error: ' + err.message + '\n';
+          if (err.log) {
+            logStr += '\nSMTP Session Log:\n' + err.log.join('\n');
+          }
+          logPre.textContent = logStr;
+          logPre.style.background = 'rgba(239, 68, 68, 0.08)';
+          logPre.style.color = '#ef4444';
+          logPre.style.borderLeft = '4px solid #ef4444';
+        } finally {
+          testBtn.disabled = false;
+          testBtn.textContent = 'Send Test Email';
+        }
+      };
+
+    } catch (err) {
+      console.error(err);
+      root.innerHTML = '<h2>SMTP &amp; Notifications</h2><p class="error-msg" style="color:var(--danger)">Failed to load settings: ' + escape(err.message) + '</p>';
+    }
   }
 
   function renderFields(fields) {

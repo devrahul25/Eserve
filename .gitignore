@@ -3,8 +3,12 @@
 content.json
 content.php
 admin/backups/
+admin/data/
 
 # Logs and temp files
 *.log
 .DS_Store
 node_modules/
+
+# htaccess
+.htaccess

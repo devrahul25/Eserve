@@ -120,9 +120,12 @@
   const form = document.querySelector('#contactForm');
   if (form) {
     const success = form.querySelector('.form-success');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       let valid = true;
+      
       form.querySelectorAll('.field').forEach((f) => {
         const input = f.querySelector('input, textarea, select');
         const err = f.querySelector('.err');
@@ -133,12 +136,67 @@
         if (err) err.textContent = msg;
         if (msg) valid = false;
       });
+      
       if (valid) {
-        if (success) {
-          success.classList.add('show');
-          form.reset();
-          setTimeout(() => success.classList.remove('show'), 5000);
-        }
+        // Disable button and show loading state
+        const origContent = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
+        submitBtn.innerHTML = 'Sending...';
+        
+        // Hide previous success/error messages
+        if (success) success.classList.remove('show');
+        
+        const formData = {
+          name: form.querySelector('#name').value,
+          email: form.querySelector('#email').value,
+          company: form.querySelector('#company') ? form.querySelector('#company').value : '',
+          service: form.querySelector('#service') ? form.querySelector('#service').value : '',
+          budget: form.querySelector('#budget') ? form.querySelector('#budget').value : '',
+          message: form.querySelector('#message').value
+        };
+        
+        fetch('contact-submit.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+        .then(async (res) => {
+          let body = null;
+          try { body = await res.json(); } catch(err) {}
+          if (!res.ok) {
+            throw new Error((body && body.error) || 'Failed to submit form.');
+          }
+          return body;
+        })
+        .then((res) => {
+          if (success) {
+            success.textContent = "Thanks — your message is on its way. We'll reply within one working day.";
+            success.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            success.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+            success.style.color = '#10b981';
+            success.classList.add('show');
+            form.reset();
+            setTimeout(() => success.classList.remove('show'), 6000);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          if (success) {
+            success.textContent = "Oops! " + err.message + " Please check your connection or contact us directly at hello@eserveinfotech.co.uk.";
+            success.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            success.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+            success.style.color = '#ef4444';
+            success.classList.add('show');
+          }
+        })
+        .finally(() => {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '';
+          submitBtn.innerHTML = origContent;
+        });
       }
     });
     // clear error on input
