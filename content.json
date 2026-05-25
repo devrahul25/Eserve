@@ -1,0 +1,33 @@
+{
+    "site": {
+        "company": "Eserve Infotech",
+        "cta_quote_button": "Craft Your Vision",
+        "email": "info@eserveinfotech.co.uk",
+        "phone": "07442271010",
+        "address_line_1": "Eserve@Tbxh, level 3 , 4 Bedford Park",
+        "address_line_2": "Croydon UK CR0 2AP",
+        "footer_tagline": "Technology Solutions Built for Fostering & Care Services."
+    },
+    "home": {
+        "hero_eyebrow": "Smart digital solutions for fostering and care services",
+        "hero_h1_line1": "Web & Mobile Apps",
+        "hero_h1_line2": "Tailor made for",
+        "stat_1_value": "12",
+        "stat_1_suffix": "",
+        "stat_1_label": "Projects completed",
+        "stat_2_value": "6",
+        "stat_2_suffix": "+",
+        "hero_h1_line3": "Fostering & Care Services",
+        "hero_lead": "We design secure, scalable web and mobile applications tailored for fostering agencies and care providers—built with Ofsted and GDPR compliance at the core.",
+        "hero_cta_secondary": "View Our Solutions"
+    },
+    "about": {
+        "hero_lead": "At Eserve Infotech UK Pvt. Ltd., we bring together a unique combination of social care expertise and advanced digital technology. Our focus is on building meaningful, scalable, and compliant systems that support fostering agencies and care providers across the UK.",
+        "hero_h1_part1": "Building practical digital solutions for ",
+        "hero_h1_part2": "care services."
+    },
+    "services": {
+        "card_3_title": "Brand & Marketing Design",
+        "card_3_desc": "Designed specifically for the fostering & care sector to support recruitment, compliance, and clear communication.\nSoP's,Leaflets,Brochures,Newsletters..."
+    }
+}
