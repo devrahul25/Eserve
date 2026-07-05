@@ -323,7 +323,7 @@
 
   SCHEMA.svc_web_dev = makeServiceSchema('svc_web_dev', 'Web Development', 'Full control over the web development service sub-page.');
   SCHEMA.svc_mobile  = makeServiceSchema('svc_mobile',  'Mobile App Development', 'Full control over the mobile apps service sub-page.');
-  SCHEMA.svc_ai      = makeServiceSchema('svc_ai',      'AI Solutions', 'Full control over the generative AI service sub-page.');
+  SCHEMA.svc_ai      = makeServiceSchema('svc_ai',      'Brand & Marketing Design', 'Full control over the Brand & Marketing Design service sub-page.');
   SCHEMA.svc_seo     = makeServiceSchema('svc_seo',     'SEO & Growth', 'Full control over the SEO service sub-page.');
   SCHEMA.svc_erp     = makeServiceSchema('svc_erp',     'ERP & CRM', 'Full control over the enterprise software service sub-page.');
 
@@ -861,11 +861,11 @@
       '../about.html',
       '../portfolio.html',
       '../contact.html',
-      'web-development.html',
-      'mobile-app.html',
-      'ai-solutions.html',
-      'seo.html',
-      'erp-crm.html'
+      '../services/web-development.html',
+      '../services/mobile-app.html',
+      '../services/brand-marketing.html',
+      '../services/seo.html',
+      '../services/erp-crm.html'
     ];
     const foundKeys = new Set();
     
